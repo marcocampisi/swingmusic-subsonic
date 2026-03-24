@@ -97,10 +97,10 @@ export default defineStore('settings', {
             this.lastfm_api_key = settings.lastfmApiKey
             this.lastfm_api_secret = settings.lastfmApiSecret
             this.lastfm_session_key = settings.lastfmSessionKey
-            this.use_lyrics_plugin = settings.plugins.find(p => p.name === 'lyrics_finder')?.active
+            this.use_lyrics_plugin = settings.plugins?.find(p => p.name === 'lyrics_finder')?.active
 
             if (this.use_lyrics_plugin) {
-                this.lyrics_plugin_settings = settings.plugins.find(p => p.name === 'lyrics_finder')?.settings
+                this.lyrics_plugin_settings = settings.plugins?.find(p => p.name === 'lyrics_finder')?.settings || {}
             }
         },
         setArtistSeparators(separators: string[]) {

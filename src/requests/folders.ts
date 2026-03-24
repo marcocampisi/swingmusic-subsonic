@@ -1,23 +1,11 @@
-import { paths } from '@/config'
 import { Folder, Track } from '@/interfaces'
-import useAxios from './useAxios'
+import { getSubsonicConfig, subsonicRequest } from '@/utils/subsonic'
+import { mapSubsonicTrack } from '@/utils/subsonicMapper'
 
 export async function getFiles(
     path: string,
     start: number,
     limit: number,
-    tracks_only = false,
-    options: {
-        sorttracksby: string
-        tracksort_reverse: boolean
-        sortfoldersby: string
-        foldersort_reverse: boolean
-    } = {
-        sorttracksby: 'default',
-        tracksort_reverse: false,
-        sortfoldersby: 'default',
-        foldersort_reverse: false,
-    }
 ) {
     interface FolderData {
         tracks: Track[]
@@ -26,57 +14,77 @@ export async function getFiles(
         total: number
     }
 
-    const { data, error } = await useAxios({
-        url: paths.api.folder.base,
-        props: {
-            folder: path,
-            start,
-            limit,
-            tracks_only,
-            ...options,
-        },
-    })
-
-    if (error) {
-        console.error(error)
+    const config = getSubsonicConfig()
+    if (!config.url) {
+        return <FolderData>{ path: '', tracks: [], folders: [], total: 0 }
     }
 
-    if (data) {
-        return data as FolderData
+    let endpoint = 'getMusicDirectory.view'
+    let params: any = { id: path }
+
+    if (!path || path === '$home' || path === '/') {
+        endpoint = 'getIndexes.view'
+        params = {}
+    }
+
+    const data = await subsonicRequest(endpoint, params)
+
+    if (!data) {
+        return <FolderData>{ path: '', tracks: [], folders: [], total: 0 }
+    }
+
+    const folders: Folder[] = []
+    const tracks: Track[] = []
+
+    if (endpoint === 'getIndexes.view') {
+        const indexes = data.indexes
+        if (indexes && indexes.index) {
+            indexes.index.forEach((idx: any) => {
+                idx.artist.forEach((artist: any) => {
+                    folders.push({
+                        name: artist.name,
+                        path: artist.id,
+                        has_tracks: 0,
+                        is_sym: false,
+                        trackcount: 0,
+                        foldercount: 0,
+                    })
+                })
+            })
+        }
+    } else {
+        const directory = data.directory
+        if (directory && directory.child) {
+            directory.child.forEach((child: any) => {
+                if (child.isDir) {
+                    folders.push({
+                        name: child.title || child.name,
+                        path: child.id,
+                        has_tracks: 0,
+                        is_sym: false,
+                        trackcount: 0,
+                        foldercount: 0,
+                    })
+                } else {
+                    tracks.push(mapSubsonicTrack(child))
+                }
+            })
+        }
     }
 
     return <FolderData>{
-        path: '',
-        tracks: [],
-        folders: [],
-        total: 0,
+        path: path,
+        tracks,
+        folders,
+        total: folders.length + tracks.length,
     }
 }
 
 export async function openInFiles(path: string) {
-    const { error } = await useAxios({
-        url: paths.api.folder.showInFiles + `?path=${path}`,
-        method: 'GET',
-    })
-
-    if (error) {
-        console.error(error)
-    }
+    console.log('Open in files not supported for Subsonic')
 }
 
 export async function getTracksInPath(path: string) {
-    const { data, error } = await useAxios({
-        url: paths.api.folder.base + '/tracks/all' + `?path=${path}`,
-        method: 'GET',
-    })
-
-    if (error) {
-        console.error(error)
-    }
-
-    if (data) {
-        return data.tracks as Track[]
-    }
-
-    return <Track[]>[]
+    const res = await getFiles(path, 0, 1000)
+    return res.tracks
 }

@@ -5,7 +5,6 @@ import vue from "@vitejs/plugin-vue";
 import svgLoader from "vite-svg-loader";
 import { VitePWA } from "vite-plugin-pwa";
 import viteCompression from "vite-plugin-compression";
-import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 const path = require("path");
 
@@ -20,9 +19,9 @@ export default defineConfig({
         enabled: true,
       },
       manifest: {
-        name: "Swing Music",
-        short_name: "Swing Music",
-        description: "Swing Music",
+        name: "Peppecar Music",
+        short_name: "Peppecar Music",
+        description: "Peppecar Music",
         theme_color: "#111",
         icons: [
           {
@@ -91,9 +90,6 @@ export default defineConfig({
     viteCompression({
       threshold: 150,
     }),
-    nodePolyfills({
-      include: ['crypto'],
-    }),
   ],
   resolve: {
     alias: {
@@ -113,3 +109,4 @@ export default defineConfig({
     emptyOutDir: true,
   },
 });
+

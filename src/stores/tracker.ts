@@ -44,12 +44,21 @@ function getSource(source: From) {
   }
 }
 
+import { getSubsonicConfig, subsonicRequest } from '@/utils/subsonic'
+
 export function sendLogData(
   trackhash: string,
   duration: number,
   from: From,
   timestamp: number
 ) {
+  const config = getSubsonicConfig()
+  if (config.url) {
+    const timeAsDate = new Date(timestamp * 1000).getTime()
+    subsonicRequest('scrobble.view', { id: trackhash, time: timeAsDate, submission: true })
+    return
+  }
+
   if (window.Worker) {
     const worker = new Worker("/workers/logtrack.js");
 

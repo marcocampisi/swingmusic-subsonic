@@ -38,7 +38,8 @@ export default defineStore('playlist-tracks', {
             }
 
             this.info = playlist?.info || ({} as Playlist)
-            this.initialBannerPos = this.info.settings.banner_pos
+            this.initialBannerPos = this.info?.settings?.banner_pos || 50
+
             this.createImageLink()
 
             this.resetColors()

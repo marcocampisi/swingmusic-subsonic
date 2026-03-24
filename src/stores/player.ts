@@ -13,6 +13,7 @@ import useTracker from './tracker'
 import { getBaseUrl, paths } from '@/config'
 import updateMediaNotif from '@/helpers/mediaNotification'
 import { crossFade } from '@/utils/audio/crossFade'
+import { buildSubsonicUrl, getSubsonicConfig } from '@/utils/subsonic'
 
 class AudioSource {
     private sources: HTMLAudioElement[] = []
@@ -121,6 +122,11 @@ class AudioSource {
 }
 
 export function getUrl(filepath: string, trackhash: string, use_legacy: boolean) {
+    const config = getSubsonicConfig()
+    if (config.url) {
+        return buildSubsonicUrl('stream.view', { id: trackhash })
+    }
+
     // INFO: Force using legacy streaming endpoint until
     // we change the playback engine to properly support
     // the chunked streaming endpoint.
@@ -312,9 +318,10 @@ export const usePlayer = defineStore('player', () => {
 
         if (diff < 0) {
             const line = lyrics.calculateCurrentLine()
-            lyrics.setCurrentLine(line + 1, false)
+            lyrics.setCurrentLine(line, false)
             return
         }
+
 
         if (diff < 1200) {
             // set timer to next line

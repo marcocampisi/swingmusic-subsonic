@@ -5,7 +5,14 @@ import useAxios from '../useAxios'
 
 const { add_root_dir, get_root_dirs, remove_root_dir } = paths.api.settings
 
+import { getSubsonicConfig } from '@/utils/subsonic'
+
 export async function getRootDirs() {
+    const subsonicConfig = getSubsonicConfig()
+    if (subsonicConfig.url) {
+        return ['Subsonic Server']
+    }
+
     const { data, error } = await useAxios({
         url: get_root_dirs,
         method: 'GET',

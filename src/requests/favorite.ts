@@ -1,90 +1,59 @@
-import { paths } from '@/config'
-import { favType, NotifType } from '@/enums'
-import useAxios from './useAxios'
-
+import { favType } from '@/enums'
+import { subsonicRequest } from '@/utils/subsonic'
+import { mapSubsonicAlbum, mapSubsonicArtist, mapSubsonicTrack } from '@/utils/subsonicMapper'
 import { Album, Artist, Track } from '@/interfaces'
-import { useToast as notif } from '@/stores/notification'
 
 export async function addFavorite(favtype: favType, itemhash: string) {
-    const { error } = await useAxios({
-        url: paths.api.addFavorite,
-        props: {
-            type: favtype,
-            hash: itemhash,
-        },
-    })
+    let params: any = {}
+    if (favtype === favType.track) params.id = itemhash
+    if (favtype === favType.album) params.albumId = itemhash
+    if (favtype === favType.artist) params.artistId = itemhash
 
-    if (error) {
-        notif().showNotification('An error occured!', NotifType.Error)
-        return false
-    }
-
-    return true
+    const data = await subsonicRequest('star.view', params)
+    return !!data
 }
 
 export async function removeFavorite(favtype: favType, itemhash: string) {
-    const { error } = await useAxios({
-        url: paths.api.removeFavorite,
-        props: {
-            type: favtype,
-            hash: itemhash,
-        },
-    })
+    let params: any = {}
+    if (favtype === favType.track) params.id = itemhash
+    if (favtype === favType.album) params.albumId = itemhash
+    if (favtype === favType.artist) params.artistId = itemhash
 
-    if (error) {
-        notif().showNotification('An error occured!', NotifType.Error)
-        return false
-    }
-
-    return true
+    const data = await subsonicRequest('unstar.view', params)
+    return !!data
 }
 
 export async function getAllFavs(track_limit = 6, album_limit = 6, artist_limit = 6) {
-    const { data } = await useAxios({
-        url:
-            paths.api.favorites + `?track_limit=${track_limit}&album_limit=${album_limit}&artist_limit=${artist_limit}`,
-        method: 'GET',
-    })
+    const data = await subsonicRequest('getStarred.view')
+    if (!data || !data.starred) return { tracks: [], albums: [], artists: [] }
 
-    return data
+    return {
+        tracks: (data.starred.song || []).map(mapSubsonicTrack).slice(0, track_limit),
+        albums: (data.starred.album || []).map(mapSubsonicAlbum).slice(0, album_limit),
+        artists: (data.starred.artist || []).map(mapSubsonicArtist).slice(0, artist_limit),
+    }
 }
 
 export async function getFavAlbums(start=0, limit = 6) {
-    const { data } = await useAxios({
-        url: paths.api.favAlbums + `?start=${start}&limit=${limit}`,
-        method: 'GET',
-    })
-
-    return data as { albums: Album[]; total: number }
+    const data = await subsonicRequest('getStarred.view')
+    const albums = (data?.starred?.album || []).map(mapSubsonicAlbum)
+    return { albums: albums.slice(start, start + limit), total: albums.length }
 }
 
 export async function getFavTracks(start = 0, limit = 5) {
-    const { data } = await useAxios({
-        url: paths.api.favTracks + `?start=${start}&limit=${limit}`,
-        method: 'GET',
-    })
-
-    return data as { tracks: Track[]; total: number }
+    const data = await subsonicRequest('getStarred.view')
+    const tracks = (data?.starred?.song || []).map(mapSubsonicTrack)
+    return { tracks: tracks.slice(start, start + limit), total: tracks.length }
 }
 
 export async function getFavArtists(start = 0, limit = 6) {
-    const { data } = await useAxios({
-        url: paths.api.favArtists + `?start=${start}&limit=${limit}`,
-        method: 'GET',
-    })
-
-    return data as { artists: Artist[]; total: number }
+    const data = await subsonicRequest('getStarred.view')
+    const artists = (data?.starred?.artist || []).map(mapSubsonicArtist)
+    return { artists: artists.slice(start, start + limit), total: artists.length }
 }
 
 export async function isFavorite(itemhash: string, type: favType) {
-    const { data } = await useAxios({
-        url: paths.api.isFavorite + `?hash=${itemhash}&type=${type}`,
-        method: 'GET',
-    })
-
-    try {
-        return data.is_favorite as boolean
-    } catch (error) {
-        return false
-    }
+    // This is hard with subsonic as we have to fetch all starred and check.
+    // For now we assume if it's fetched from Subsonic with 'starred' property it's already marked in the UI.
+    return false
 }

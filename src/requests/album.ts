@@ -1,15 +1,6 @@
-import { paths } from '@/config'
 import { Album, StatItem, Track } from '@/interfaces'
-import { NotifType, useToast } from '@/stores/notification'
-import useAxios from './useAxios'
-
-const {
-    album: albumUrl,
-    albumartists: albumArtistsUrl,
-    albumbio: albumBioUrl,
-    albumsByArtistUrl,
-    albumVersions,
-} = paths.api
+import { subsonicRequest } from '@/utils/subsonic'
+import { mapSubsonicAlbum, mapSubsonicTrack } from '@/utils/subsonicMapper'
 
 const getAlbumData = async (albumhash: string, albumlimit: number) => {
     interface AlbumData {
@@ -27,102 +18,52 @@ const getAlbumData = async (albumhash: string, albumlimit: number) => {
         other_versions: Album[]
     }
 
-    const { data, status } = await useAxios({
-        url: albumUrl,
-        props: {
-            albumhash,
-            albumlimit,
-        },
-    })
+    const data = await subsonicRequest('getAlbum.view', { id: albumhash })
 
-    if (status == 204) {
-        useToast().showNotification('Album not created yet!', NotifType.Error)
+    if (!data || !data.album) {
+        return null
     }
 
-    return data as AlbumData
+    const album = data.album
+    const tracks = (album.song || []).map(mapSubsonicTrack)
+
+    return <AlbumData>{
+        info: mapSubsonicAlbum(album),
+        tracks: tracks,
+        copyright: '',
+        extra: {
+            track_total: tracks.length,
+            avg_bitrate: 0,
+        },
+        stats: [],
+        more_from: {},
+        other_versions: [],
+    }
 }
 
 const getAlbumArtists = async (hash: string) => {
-    const { data, error } = await useAxios({
-        url: albumArtistsUrl,
-        props: {
-            hash: hash,
-        },
-    })
-
-    if (error) {
-        console.error(error)
-    }
-
-    return data.artists
+    return []
 }
 
 const getAlbumBio = async (hash: string) => {
-    const { data, status } = await useAxios({
-        url: albumBioUrl,
-        props: {
-            hash: hash,
-        },
-    })
-
-    if (data) {
-        return data.bio
-    }
-
-    if (status == 404) {
-        return null
-    }
+    return null
 }
 
 export const getAlbumsFromArtist = async (albumartists: {}, limit: number = 2, base_title: string) => {
-    const { data } = await useAxios({
-        url: albumsByArtistUrl,
-        props: {
-            albumartists: albumartists,
-            limit: limit,
-            base_title,
-        },
-    })
-
-    if (data) {
-        return data
-    }
-
     return []
 }
 
 export const getAlbumVersions = async (og_album_title: string, albumhash: string) => {
-    const { data } = await useAxios({
-        url: albumVersions,
-        props: {
-            og_album_title,
-            albumhash,
-        },
-    })
-
-    if (data) {
-        return data
-    }
-
     return []
 }
 
 export async function getAlbumTracks(albumhash: string): Promise<Track[]> {
-    const { data } = await useAxios({
-        url: albumUrl + `/${albumhash}/` + 'tracks',
-        method: 'GET',
-    })
-
-    return data
+    const data = await getAlbumData(albumhash, 1000)
+    return data?.tracks || []
 }
 
 export async function getSimilarAlbums(artisthash: string, limit: number = 5): Promise<Album[]> {
-    const { data } = await useAxios({
-        url: albumUrl + '/similar?' + 'artisthash=' + artisthash + '&albumlimit=' + limit,
-        method: 'GET',
-    })
-
-    return data
+    return []
 }
 
 export { getAlbumData as getAlbum, getAlbumArtists, getAlbumBio }

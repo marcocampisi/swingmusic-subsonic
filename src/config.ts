@@ -216,22 +216,33 @@ export const paths = {
             },
         },
     },
-    images: {
-        thumb: {
-            small: baseImgUrl + imageRoutes.thumb.small,
-            smallish: baseImgUrl + imageRoutes.thumb.smallish,
-            large: baseImgUrl + imageRoutes.thumb.large,
-            medium: baseImgUrl + imageRoutes.thumb.medium,
-        },
-        artist: {
-            small: baseImgUrl + imageRoutes.artist.small,
-            large: baseImgUrl + imageRoutes.artist.large,
-            medium: baseImgUrl + imageRoutes.artist.medium,
-        },
-        playlist: baseImgUrl + imageRoutes.playlist,
-        mix: {
-            medium: baseImgUrl + '/mix/medium/',
-            small: baseImgUrl + '/mix/small/',
-        },
-    },
+    images: (() => {
+        const isSubsonicone = !!localStorage.getItem('subsonic_url')
+        if (isSubsonicone) {
+            return {
+                thumb: { small: '', smallish: '', large: '', medium: '' },
+                artist: { small: '', large: '', medium: '' },
+                playlist: '',
+                mix: { medium: '', small: '' },
+            }
+        }
+        return {
+            thumb: {
+                small: baseImgUrl + imageRoutes.thumb.small,
+                smallish: baseImgUrl + imageRoutes.thumb.smallish,
+                large: baseImgUrl + imageRoutes.thumb.large,
+                medium: baseImgUrl + imageRoutes.thumb.medium,
+            },
+            artist: {
+                small: baseImgUrl + imageRoutes.artist.small,
+                large: baseImgUrl + imageRoutes.artist.large,
+                medium: baseImgUrl + imageRoutes.artist.medium,
+            },
+            playlist: baseImgUrl + imageRoutes.playlist,
+            mix: {
+                medium: baseImgUrl + '/mix/medium/',
+                small: baseImgUrl + '/mix/small/',
+            },
+        }
+    })(),
 }

@@ -39,8 +39,9 @@ export default defineStore("lyricsplugin", {
             throw new TrackChangedError();
           }
           if (data && data.lyrics) {
-            return lyrics.setLyrics(data.lyrics);
+            return lyrics.setLyrics(data.lyrics, data.synced);
           }
+
 
           throw new Error("No lyrics found!");
         })

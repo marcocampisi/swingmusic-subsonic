@@ -30,7 +30,7 @@
       <div v-if="!lyrics.synced" class="unsynced">
         <div id="lyricsline--1"></div>
         <div v-for="(line, index) in lyrics.lyrics" :key="index" class="line">
-          {{ line }}
+          {{ line.text }}
         </div>
       </div>
       <div v-if="lyrics.copyright && lyrics.lyrics" class="copyright">

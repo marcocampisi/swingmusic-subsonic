@@ -51,7 +51,22 @@ export async function logoutUser() {
     return res
 }
 
+import { getSubsonicConfig } from '@/utils/subsonic'
+
 export async function getLoggedInUser() {
+    const subsonicConfig = getSubsonicConfig()
+    if (subsonicConfig.url) {
+        return {
+            status: 200,
+            data: {
+                id: 1,
+                username: subsonicConfig.user,
+                roles: ['admin'],
+                image: '',
+            },
+        }
+    }
+
     const res = await useAxios({
         url: paths.api.auth.currentUser,
         method: 'GET',

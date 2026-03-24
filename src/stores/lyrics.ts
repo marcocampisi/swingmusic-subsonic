@@ -6,6 +6,7 @@ import useSettings from "./settings";
 
 import { LyricsLine } from "@/interfaces";
 import { checkExists, getLyrics } from "@/requests/lyrics";
+import { getSubsonicConfig } from "@/utils/subsonic";
 import { Routes, router } from "@/router";
 
 // a custom error class called HasNoSyncedLyricsError
@@ -41,7 +42,7 @@ export default defineStore("lyrics", {
       this.copyright = "";
       this.synced = true;
 
-      getLyrics(track.filepath, track.trackhash)
+      getLyrics(track.filepath, track.trackhash, track.artists[0]?.name, track.title)
         .then((data) => {
           this.currentTrack = track.trackhash;
 
@@ -57,34 +58,36 @@ export default defineStore("lyrics", {
           if (this.lyrics.length && !this.synced) {
             throw new HasUnSyncedLyricsError();
           }
+
         })
         .then(async () => {
           const line = this.calculateCurrentLine();
-
-          if (line == -1) {
-            return this.scrollToContainerTop();
-          }
-
-          this.scrollToCurrentLine();
+          this.setCurrentLine(line);
         })
         .catch((e) => {
           const settings = useSettings();
           const plugin = useLyricsPlugin();
 
-          // catch HasUnSyncedLyricsError instance
           if (e instanceof HasUnSyncedLyricsError) {
-            if (!settings.lyrics_plugin_settings.overide_unsynced) return;
+            if (!getSubsonicConfig().url && !settings.lyrics_plugin_settings.overide_unsynced) {
+              return;
+            }
             plugin.searchLyrics();
+            return;
           }
+
 
           this.exists = false;
           this.lyrics = <LyricsLine[]>[];
           this.copyright = "";
 
-          if (settings.lyrics_plugin_settings.auto_download) {
+          if (getSubsonicConfig().url || settings.lyrics_plugin_settings.auto_download) {
             plugin.searchLyrics();
           }
+
         });
+
+
     },
     scrollToContainerTop() {
       const container = document.getElementById("lyricscontent");
@@ -101,7 +104,9 @@ export default defineStore("lyrics", {
         this.lyrics = <LyricsLine[]>[];
       }
 
-      checkExists(filepath, trackhash).then((data) => {
+      const queue = useQueue()
+      const track = queue.currenttrack
+      checkExists(filepath, trackhash, track.artists[0]?.name, track.title).then((data) => {
         this.exists = data.exists;
       });
     },
@@ -151,34 +156,36 @@ export default defineStore("lyrics", {
       });
     },
     calculateCurrentLine() {
-      if (!this.lyrics.length) return -1;
+      if (!this.lyrics.length || !this.synced) return -1;
 
       const queue = useQueue();
-      const duration = queue.duration.current;
+      const millis = queue.duration.current * 1000;
 
-      if (!this.synced || !this.lyrics) return -1;
+      let index = -1;
+      for (let i = 0; i < this.lyrics.length; i++) {
+        if (this.lyrics[i].time <= millis) {
+          index = i;
+        } else {
+          break;
+        }
+      }
 
-      const millis = duration * 1000;
-      const closest = this.lyrics.reduce((prev, curr) => {
-        return Math.abs(curr.time - millis) < Math.abs(prev.time - millis)
-          ? curr
-          : prev;
-      });
-
-      return this.lyrics.indexOf(closest) - 1;
+      return index;
     },
+
     sync() {
       const line = this.calculateCurrentLine();
       this.setCurrentLine(line);
     },
-    setLyrics(lyrics: LyricsLine[]) {
+    setLyrics(lyrics: LyricsLine[], synced: boolean = true) {
       this.lyrics = lyrics;
-      this.synced = true;
+      this.synced = synced;
       this.exists = true;
       this.currentTrack = useQueue().currenttrackhash;
 
       this.setCurrentLine(this.currentLine);
     },
+
     setUserScrolled(value: boolean) {
       this.user_scrolled = value;
     },

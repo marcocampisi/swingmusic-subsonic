@@ -1,8 +1,14 @@
 import { paths } from '@/config'
 import { DBSettings } from '@/enums'
 import useAxios from '../useAxios'
+import { getSubsonicConfig } from '@/utils/subsonic'
 
 export async function getAllSettings() {
+    const subsonicConfig = getSubsonicConfig()
+    if (subsonicConfig.url) {
+        return { settings: {} as DBSettings, status: 200 }
+    }
+
     const { data, status } = await useAxios({
         url: paths.api.settings.base,
         method: 'GET',

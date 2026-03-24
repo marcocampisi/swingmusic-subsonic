@@ -3,6 +3,8 @@ import { Artist, Playlist, Track } from '@/interfaces'
 import { NotifType, Notification, useToast } from '@/stores/notification'
 import useAxios from './useAxios'
 import useFolder from '@/stores/pages/folder'
+import { getSubsonicConfig, subsonicRequest } from '@/utils/subsonic'
+import { mapSubsonicPlaylist, mapSubsonicTrack } from '@/utils/subsonicMapper'
 
 const { new: newPlaylistUrl, base: basePlaylistUrl, artists: playlistArtistsUrl } = paths.api.playlist
 
@@ -34,11 +36,18 @@ export async function createNewPlaylist(playlist_name: string) {
     return null
 }
 
+
 /**
  * Fetches all playlists from the server.
  * @returns {Promise<Playlist[]>} A promise that resolves to an array of playlists.
  */
 export async function getAllPlaylists(no_images = false): Promise<Playlist[]> {
+    const config = getSubsonicConfig()
+    if (config.url) {
+        const data = await subsonicRequest('getPlaylists.view')
+        return (data?.playlists?.playlist || []).map(mapSubsonicPlaylist)
+    }
+
     const { data, error } = await useAxios({
         url: basePlaylistUrl + (no_images ? '?no_images=true' : ''),
         method: 'GET',
@@ -54,6 +63,51 @@ export async function getAllPlaylists(no_images = false): Promise<Playlist[]> {
 }
 
 export async function getPlaylist(pid: number | string, no_tracks = false, start: number = 0, limit: number = 50) {
+    const config = getSubsonicConfig()
+    if (config.url) {
+        if (pid === 'recentlyadded' || pid === 'recentlyplayed') {
+            const type = pid === 'recentlyadded' ? 'newest' : 'recent'
+            const albumData = await subsonicRequest('getAlbumList2.view', { type, size: 10 })
+            const albums = albumData?.albumList2?.album || []
+            
+            // Fetch tracks for these albums
+            const albumTracks = await Promise.all(albums.map(async (a: any) => {
+                const data = await subsonicRequest('getAlbum.view', { id: a.id })
+                return (data?.album?.song || []).map(mapSubsonicTrack)
+            }))
+
+            const tracks = albumTracks.flat().slice(0, 50)
+
+            return {
+                info: {
+                    id: pid as any,
+                    name: pid === 'recentlyadded' ? 'Recently Added' : 'Recently Played',
+                    image: '',
+                    has_image: false,
+                    tracks: [],
+                    count: tracks.length,
+                    _last_updated: '',
+                    thumb: '',
+                    duration: 0,
+                    settings: { banner_pos: 50, has_gif: false, square_img: false, pinned: false },
+                    pinned: false,
+                    images: [],
+                } as Playlist,
+                tracks,
+            }
+        }
+
+
+        const data = await subsonicRequest('getPlaylist.view', { id: pid })
+        const playlist = data?.playlist
+        if (!playlist) return null
+
+        return {
+            info: mapSubsonicPlaylist(playlist),
+            tracks: (playlist?.entry || []).map(mapSubsonicTrack),
+        }
+    }
+
     const uri = `${basePlaylistUrl}/${pid}?no_tracks=${no_tracks}&start=${start}&limit=${limit}`
 
     interface PlaylistData {
@@ -76,6 +130,7 @@ export async function getPlaylist(pid: number | string, no_tracks = false, start
 
     return null
 }
+
 
 // ======== ADD ITEM TO PLAYLIST ========
 export async function addItemToPlaylist(playlist: Playlist, props: {}) {
