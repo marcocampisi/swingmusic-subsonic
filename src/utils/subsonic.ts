@@ -9,13 +9,20 @@ export interface SubsonicConfig {
     client: string
 }
 
-let config: SubsonicConfig = {
-    url: localStorage.getItem('subsonic_url') || '',
-    user: localStorage.getItem('subsonic_user') || '',
-    pass: localStorage.getItem('subsonic_pass') || '',
-    version: '1.16.1',
-    client: 'swingmusic-webclient',
-}
+let config: SubsonicConfig = (() => {
+    const url = localStorage.getItem('subsonic_url')
+    const user = localStorage.getItem('subsonic_user')
+    const pass = localStorage.getItem('subsonic_pass')
+    
+    return {
+        url: (url && url !== 'undefined') ? url : '',
+        user: (user && user !== 'undefined') ? user : '',
+        pass: (pass && pass !== 'undefined') ? pass : '',
+        version: '1.16.1',
+        client: 'swingmusic-webclient',
+    }
+})()
+
 
 export function setSubsonicConfig(newConfig: Partial<SubsonicConfig>) {
     Object.assign(config, newConfig)
@@ -64,16 +71,23 @@ export function getSubsonicParams() {
 }
 
 export function buildSubsonicUrl(endpoint: string, params: Record<string, any> = {}) {
-    if (!config.url) return ''
-    const url = new URL(`${config.url}/rest/${endpoint}`)
-    const allParams = { ...getSubsonicParams(), ...params }
+    if (!config.url || config.url === 'undefined' || !config.url.startsWith('http')) return ''
+    
+    try {
+        const url = new URL(`${config.url}/rest/${endpoint}`)
+        const allParams = { ...getSubsonicParams(), ...params }
 
-    Object.entries(allParams).forEach(([key, value]) => {
-        url.searchParams.append(key, String(value))
-    })
+        Object.entries(allParams).forEach(([key, value]) => {
+            url.searchParams.append(key, String(value))
+        })
 
-    return url.toString()
+        return url.toString()
+    } catch (e) {
+        console.warn('buildSubsonicUrl failed with invalid URL', config.url)
+        return ''
+    }
 }
+
 
 export async function subsonicRequest(endpoint: string, params: Record<string, any> = {}) {
     const url = buildSubsonicUrl(endpoint, params)

@@ -106,10 +106,19 @@ export default defineStore("lyrics", {
 
       const queue = useQueue()
       const track = queue.currenttrack
-      checkExists(filepath, trackhash, track.artists[0]?.name, track.title).then((data) => {
-        this.exists = data.exists;
+
+      if (!track || !track.artists) return;
+
+      const artist = track.artists[0]?.name || "";
+      const title = track.title || "";
+
+      checkExists(filepath, trackhash, artist, title).then((data) => {
+        if (data) {
+          this.exists = data.exists;
+        }
       });
     },
+
     setNextLineTimer(duration: number) {
       this.ticking = true;
       setTimeout(() => {
