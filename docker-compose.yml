@@ -6,5 +6,5 @@ services:
     image: peppecar-music:latest
     container_name: peppecar-music
     ports:
-      - "1970:1970"
+      - "1970:80"
     restart: unless-stopped
