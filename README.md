@@ -1,44 +1,25 @@
-### Swing music client
+# Peppecar Music
 
-This repo contains the client code for the [swing music player](https://github.com/geoffrey45/swingmusic).
+Peppecar Music is a modern, premium web client for Subsonic-compatible music servers (Navidrome, Airsonic, Gonic, etc.). It features full synchronization with LRCLIB for lyrics and is specifically designed for a premium streaming experience.
 
-### Setup
+## Features
+- **Subsonic API Integration**: Works with all major Subsonic servers.
+- **Synced Lyrics**: Native support for OpenSubsonic structured lyrics with an intelligent LRCLIB fallback.
+- **Modern UI**: Built with Vue 3, Vite, and Pinia.
+- **Docker Ready**: Includes Dockerfile and Docker Compose for easy deployment.
 
-This project requires `Node v14` or newer and `yarn@1.22.19`. Install them first.
+## Deployment
 
-- [NodeJS](https://nodejs.org/en/)
-- [Yarn](https://yarnpkg.com)
+### With Docker
+1. Build the image: `docker build -t peppecar-music .`
+2. Run the container: `docker-compose up -d`
+3. Access at `http://localhost:8080`
 
-Clone the repository and install the dependencies.
-
-```bash
-git clone https://github.com/geoffrey45/swing-client.git
-
-cd swing-client
-
-# Install dependencies
-yarn install
-
-# Start the development server
-yarn dev
-
-# Build the project
-yarn build
-```
-
----
-### Generating PWA favicons
-
-```sh
-yarn generate-pwa-assets
-```
----
-
-
-### Contributing
-
-If you want to contribute to this project, feel free to open a pull request with you changes. All bug reports and contributions are welcome.
+### Locally
+1. Install dependencies: `yarn install`
+2. Run dev server: `yarn dev`
+3. Build for production: `yarn build`
 
 ---
 
-**[MIT License](https://opensource.org/licenses/MIT) | Copyright (c) 2023 Mungai Njoroge**
+**[MIT License](https://opensource.org/licenses/MIT) | Copyright (c) 2024 Peppecar**
