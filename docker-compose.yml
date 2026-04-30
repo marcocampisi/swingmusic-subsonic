@@ -3,8 +3,8 @@ version: '3.8'
 services:
   web:
     build: .
-    image: peppecar-music:latest
-    container_name: peppecar-music
+    image: swingsubsonic-music:latest
+    container_name: swingsubsonic-music
     ports:
       - "1970:80"
     restart: unless-stopped
