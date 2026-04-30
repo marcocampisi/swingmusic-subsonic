@@ -65,7 +65,7 @@ onMounted(() => {
             padding: $small;
             font-size: 12px;
             font-family: 'SF Mono';
-            color: #ffffff00;
+            color: $white; /* Fixed text color */
         }
 
         svg {
