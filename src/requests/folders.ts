@@ -23,7 +23,7 @@ export async function getFiles(
     let params: any = { id: path }
 
     if (!path || path === '$home' || path === '/') {
-        endpoint = 'getIndexes.view'
+        endpoint = 'getMusicFolders.view'
         params = {}
     }
 
@@ -36,19 +36,17 @@ export async function getFiles(
     const folders: Folder[] = []
     const tracks: Track[] = []
 
-    if (endpoint === 'getIndexes.view') {
-        const indexes = data.indexes
-        if (indexes && indexes.index) {
-            indexes.index.forEach((idx: any) => {
-                idx.artist.forEach((artist: any) => {
-                    folders.push({
-                        name: artist.name,
-                        path: artist.id,
-                        has_tracks: 0,
-                        is_sym: false,
-                        trackcount: 0,
-                        foldercount: 0,
-                    })
+    if (endpoint === 'getMusicFolders.view') {
+        const musicFolders = data.musicFolders
+        if (musicFolders && musicFolders.musicFolder) {
+            musicFolders.musicFolder.forEach((folder: any) => {
+                folders.push({
+                    name: folder.name,
+                    path: folder.id,
+                    has_tracks: 0,
+                    is_sym: false,
+                    trackcount: 0,
+                    foldercount: 0,
                 })
             })
         }
